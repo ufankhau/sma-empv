@@ -70,10 +70,10 @@ sma_index = {
 """
 *  SMA sends their data ("value" or "counter") in the following units
 *
-*  power in			  0.1 W
-*  energy in			1 Ws
-*  current in			1 mA
-*  voltage in			1 mV
+*  power in		 	  0.1 W
+*  energy in		    1 Ws
+*  current in		    1 mA
+*  voltage in		    1 mV
 *  frequency in		0.001 Hz
 *  power factor in	0.001 of cos(phi)
 *
@@ -88,10 +88,10 @@ sma_scale = {
 	'kWh':	   3600000,
 	'kVAh':	   3600000,
 	'kVAhr':   3600000,
-	'A':		  1000,
-	'V':		  1000,
-	'Hz':		  1000,
-	'':			  1000
+	'A':	      1000,
+	'V':	      1000,
+	'Hz':	      1000,
+	'':		      1000
 }
 
 
@@ -104,7 +104,7 @@ sma_scale = {
 *  |----------|----------|----------|----------|
 *  
 *  Channel: following standard, range 128 ... 199 reserved for supplier specific
-*  			use, e.g. code 144 used by SMA for sending software version
+*  	 		use, e.g. code 144 used by SMA for sending software version
 *  Index:   according to above directory "sma_index"
 *  Type:    type of measurement, 2 types are in use, "actual" value and "counter"
 *  Tarif:   not used (always zero)
