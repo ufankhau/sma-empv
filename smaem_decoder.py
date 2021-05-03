@@ -11,9 +11,10 @@
 *      https://github.com/ufankhau/sma-empv/documentation/SMA-EM_GE.pdf
 *
 *  The core of the following code is taken from the work of david-m-m and
-*  datenschuft (https://github.com/datenschuft/SMA-EM)
+*  datenschuft (https://github.com/datenschuft/SMA-EM) and adjusted to fit
+*  my needs
 *
-*  2021-May-02
+*  2021-May-03
 *
 *  ----------------------------------------------------------------------------
 */
@@ -126,44 +127,61 @@ def decode_OBIS(obis):
   return (obis_index,datatype)
 
 
-def decode_speedwire(datagram):
-  emparts={}
-  # process data only of SMA header is present
-  if datagram[0:3]==b'SMA':
-    # datagram length
-    datalength=int.from_bytes(datagram[12:14],byteorder='big')+16
-    #print('data lenght: {}'.format(datalength))
-    # serial number
-    emID=int.from_bytes(datagram[20:24],byteorder='big')
-    #print('seral: {}'.format(emID))
-    emparts['serial']=emID
-    # timestamp
-    timestamp=int.from_bytes(datagram[24:28],byteorder='big')
-    #print('timestamp: {}'.format(timestamp))
-    emparts['timestamp']=timestamp
-    # decode OBIS data blocks
-    # start with header
-    position=28
-    while position<datalength:
-      # decode header
-      #print('pos: {}'.format(position))
-      (measurement,datatype)=decode_OBIS(datagram[position:position+4])
-      #print('measurement {} datatype: {}'.format(measurement,datatype))
-      # decode values
-      # actual values
-      if datatype=='actual':
-        value=int.from_bytes( datagram[position+4:position+8], byteorder='big' )
-        position+=8
-        if measurement in sma_channels.keys():
-          emparts[sma_channels[measurement][0]]=value/sma_units[sma_channels[measurement][1]]
-          emparts[sma_channels[measurement][0]+'unit']=sma_channels[measurement][1]
-      # counter values
-      elif datatype=='counter':
-        value=int.from_bytes( datagram[position+4:position+12], byteorder='big' )
-        position+=12
-        if measurement in sma_channels.keys():
-          emparts[sma_channels[measurement][0]+'counter']=value/sma_units[sma_channels[measurement][2]]
-          emparts[sma_channels[measurement][0]+'counterunit']=sma_channels[measurement][2]
+"""
+
+"""
+def decode_SMAEM(datagram):
+	em_message={}
+	print_line('* Decode SMAEM', debug=True)
+
+	# process data only if SMA header is present
+	if datagram[0:3]==b'SMA':
+
+		# datagram length
+		datalength=int.from_bytes(datagram[12:14], byteorder='big') + 16
+		print_line('   length of datastring: {}'.format(datalength), debug=True)
+
+		# serial number of engery meter
+		emID = int.from_bytes(datagram[20:24], byteorder='big')
+		em_message.append(('serial', emID, ''))
+
+		# timestamp of em message
+		timestamp = int.from_bytes(datagram[24:28], byteorder='big')
+		em_message.append(('timestamp', timestamp, ''))
+
+		# starting with position 28, loop of remaining length of "datagram"
+		# and decode OBIS data blocks 
+		position = 28
+		while position < datalength:
+    		(obis_index, datatype) = decode_OBIS(datagram[position:position+4])
+    		print_line('   obis_index: {} - datatype: {}'.format(obis_index, datatype), debug=True)
+
+    		if datatype == 'actual':
+    			value = int.from_bytes(datagram[position+4:position+8], byteorder='big')
+    			position += 8
+    			if obis_index in sma_index.keys():
+    				name = sma_index[obis_index][0]
+    				value = value / sma_scale[sma_index[obis_index][1]]
+    				unit = sma_index[obis_index][1]
+    				newTuple = (name, value, unit)
+    				em_message.append(newTuple)
+   			
+			elif datatype == 'counter':
+				value = int.from_bytes(datagram[position+4:position+12], byteorder='big')
+				position += 12
+				if obis_index in sma_index.keys():
+					name = sma_index[obis_index][0]
+					value = value / sma_scale[sma_index[obis_index][2]]
+					unit = sma_index[obis_index][2]
+					newTuple = (name, value, unit)
+					em_message.append(newTuple)
+
+			elif datatype == 'version':
+				value = datagram[position+4:position+8]
+				if obis_index in sma_index.keys():
+					
+
+    
       elif datatype=='version':
         value=datagram[position+4:position+8]
         if measurement in sma_channels.keys():
