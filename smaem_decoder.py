@@ -124,14 +124,14 @@ def decode_OBIS(obis):
 	else:
 		datatype='unknown'
     	print_line('* OBIS: unknown datatype: obis_index: {} datatype: {} obis_type: {}'.format(obis_index,datatype,obis_type), debug=True)
-  return (obis_index,datatype)
+	return (obis_index,datatype)
 
 
 """
 
 """
 def decode_SMAEM(datagram):
-	em_message={}
+	em_data={}
 	print_line('* Decode SMAEM', debug=True)
 
 	# process data only if SMA header is present
@@ -143,11 +143,11 @@ def decode_SMAEM(datagram):
 
 		# serial number of engery meter
 		emID = int.from_bytes(datagram[20:24], byteorder='big')
-		em_message.append(('serial', emID, ''))
+		em_data.append(('serial', emID, ''))
 
 		# timestamp of em message
 		timestamp = int.from_bytes(datagram[24:28], byteorder='big')
-		em_message.append(('timestamp', timestamp, ''))
+		em_data.append(('timestamp', timestamp, ''))
 
 		# starting with position 28, loop of remaining length of "datagram"
 		# and decode OBIS data blocks 
@@ -164,7 +164,8 @@ def decode_SMAEM(datagram):
     				value = value / sma_scale[sma_index[obis_index][1]]
     				unit = sma_index[obis_index][1]
     				newTuple = (name, value, unit)
-    				em_message.append(newTuple)
+    				print_line('   {}'.format(newTuple), debug=True)
+    				em_data.append(newTuple)
    			
 			elif datatype == 'counter':
 				value = int.from_bytes(datagram[position+4:position+12], byteorder='big')
@@ -174,44 +175,21 @@ def decode_SMAEM(datagram):
 					value = value / sma_scale[sma_index[obis_index][2]]
 					unit = sma_index[obis_index][2]
 					newTuple = (name, value, unit)
-					em_message.append(newTuple)
+					print_line('   {}'.format(newTuple), debug=True)
+					em_data.append(newTuple)
 
 			elif datatype == 'version':
-				value = datagram[position+4:position+8]
 				if obis_index in sma_index.keys():
-					
-
-    
-      elif datatype=='version':
-        value=datagram[position+4:position+8]
-        if measurement in sma_channels.keys():
-          bversion=(binascii.b2a_hex(value).decode("utf-8"))
-          version=str(int(bversion[0:2],16))+"."+str(int(bversion[2:4],16))+"."+str(int(bversion[4:6],16))
-          revision=str(chr(int(bversion[6:8])))
-          #revision definitions
-          if revision=="1":
-              #S – Spezial Version
-              version=version+".S"
-          elif revision=="2":
-              #A – Alpha (noch kein Feature Complete, Version für Verifizierung und Validierung)
-              version=version+".A"
-          elif revision=="3":
-              #B – Beta (Feature Complete, Version für Verifizierung und Validierung)
-              version=version+".B"
-          elif revision=="4":
-              #R – Release Candidate / Release (Version für Verifizierung, Validierung und Feldtest / öffentliche Version)
-              version=version+".R"
-          elif revision=="5":
-              #E – Experimental Version (dient zur lokalen Verifizierung)
-              version=version+".E"
-          elif revision=="6":
-              #N – Keine Revision
-              version=version+".N"
-          #adding versionnumber to compare versions
-          version=version+"|"+str(bversion[0:2])+str(bversion[2:4])+str(bversion[4:6])
-          emparts[sma_channels[measurement][0]]=version
-        position+=8
-      else:
-        position+=8
-  return emparts
-
+					byte3 = datagram[position+4]
+	    			byte2 = datagram[position+5]
+	    			byte1 = datagram[position+6]
+	    			byte0 = datagram[position+7]
+	    			version = str(byte3)+'.'+str(byte2).zfill(2)+'.'+str(byte1).zfill(2)+'.'+str(chr(byte0))
+	    			name = sma_index[obis_index][0]
+	    			newTuple = (name, version, '')
+	    			em_data.append(newTuple)
+	    			print_line('   {}'.format(newTuple), debug=True)
+	    		position += 8
+	    	else:
+	    		position += 8
+	return em_data
